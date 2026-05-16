@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OfferFlow — HR Offer Letter Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4f2ed;
+    --surface: #ffffff;
+    --surface2: #faf9f6;
+    --border: #e8e5de;
+    --border2: #d4d0c8;
+    --text: #1a1916;
+    --text2: #5a574f;
+    --text3: #8a8780;
+    --accent: #2d5a3d;
+    --accent2: #3a7a52;
+    --accent-bg: #e8f4ec;
+    --accent-text: #1a3d25;
+    --danger: #c0392b;
+    --danger-bg: #fdecea;
+    --warn: #a07020;
+    --warn-bg: #fef9ec;
+    --info: #1a5276;
+    --info-bg: #eaf4fd;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  [data-theme="dark"] {
+    --bg: #111210;
+    --surface: #1c1d1a;
+    --surface2: #242521;
+    --border: #2e2f2b;
+    --border2: #3d3e38;
+    --text: #f0ede6;
+    --text2: #a8a49b;
+    --text3: #6a6760;
+    --accent: #4a9e65;
+    --accent2: #5db878;
+    --accent-bg: #1a2e20;
+    --accent-text: #7dd49a;
+    --danger: #e05c4b;
+    --danger-bg: #2e1a18;
+    --warn: #d4a020;
+    --warn-bg: #2a2210;
+    --info: #4a90d9;
+    --info-bg: #141e2d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+    transition: background 0.2s, color 0.2s;
+  }
+  h1,h2,h3,h4 { font-family: 'DM Serif Display', serif; }
+
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 240px; min-width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    transition: transform 0.3s;
+  }
+  .main { margin-left: 240px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+  .topbar {
+    height: 60px; background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px; gap: 16px; position: sticky; top: 0; z-index: 90;
+  }
+  .content { padding: 28px 32px; flex: 1; }
+
+  /* Sidebar */
+  .sidebar-logo {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-text { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--accent); letter-spacing: -0.5px; }
+  .logo-sub { font-size: 11px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+  .nav { padding: 12px 10px; flex: 1; }
+  .nav-section { font-size: 11px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; padding: 12px 10px 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+    border-radius: 8px; cursor: pointer; color: var(--text2); font-size: 14px; font-weight: 400;
+    transition: all 0.15s; margin-bottom: 2px; user-select: none;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--accent-bg); color: var(--accent); font-weight: 500; }
+  .nav-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+  .nav-badge {
+    margin-left: auto; background: var(--accent); color: white;
+    font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px; min-width: 22px; text-align: center;
+  }
+  .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
+  .user-pill {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    border-radius: 8px; background: var(--bg); cursor: pointer;
+  }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white;
+    display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0;
+  }
+  .user-name { font-size: 13px; font-weight: 500; }
+  .user-role { font-size: 11px; color: var(--text3); }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px;
+    border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none;
+    transition: all 0.15s; font-family: inherit; text-decoration: none; white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border2); }
+  .btn-secondary:hover { background: var(--bg); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid transparent; }
+  .btn-ghost:hover { background: var(--bg); color: var(--text); }
+  .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid transparent; }
+  .btn-danger:hover { filter: brightness(0.95); }
+  .btn-sm { padding: 6px 13px; font-size: 13px; }
+  .btn-xs { padding: 4px 10px; font-size: 12px; border-radius: 6px; }
+  .btn svg { width: 15px; height: 15px; }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+  }
+  .card-header { padding: 18px 20px 0; }
+  .card-body { padding: 18px 20px; }
+  .card-title { font-family: 'DM Serif Display', serif; font-size: 17px; margin-bottom: 2px; }
+  .card-sub { font-size: 13px; color: var(--text3); }
+
+  /* Stat cards */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 20px; box-shadow: var(--shadow);
+  }
+  .stat-label { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--text); }
+  .stat-change { font-size: 12px; margin-top: 4px; }
+  .stat-icon {
+    width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; padding: 10px 14px; font-size: 12px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 1px solid var(--border); }
+  td { padding: 13px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px;
+    border-radius: 20px; font-size: 12px; font-weight: 500;
+  }
+  .badge-draft { background: var(--bg); color: var(--text3); border: 1px solid var(--border2); }
+  .badge-sent { background: var(--info-bg); color: var(--info); }
+  .badge-accepted { background: var(--accent-bg); color: var(--accent); }
+  .badge-rejected { background: var(--danger-bg); color: var(--danger); }
+  .badge-pending { background: var(--warn-bg); color: var(--warn); }
+
+  /* Forms */
+  .form-group { margin-bottom: 18px; }
+  label { display: block; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+  input, select, textarea {
+    width: 100%; padding: 9px 13px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 14px; color: var(--text); font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s; outline: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,90,61,0.12);
+  }
+  textarea { resize: vertical; min-height: 120px; }
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* Topbar */
+  .topbar-title { font-family: 'DM Serif Display', serif; font-size: 20px; flex: 1; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+  /* Modal */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal {
+    background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+    width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto;
+  }
+  .modal-lg { max-width: 820px; }
+  .modal-header {
+    padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 20px; }
+  .modal-body { padding: 24px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* Auth */
+  .auth-wrap {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: var(--bg); padding: 20px;
+  }
+  .auth-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg); padding: 40px 36px; width: 100%; max-width: 420px;
+  }
+  .auth-logo { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--accent); margin-bottom: 4px; }
+  .auth-tagline { font-size: 14px; color: var(--text3); margin-bottom: 32px; }
+
+  /* Template editor */
+  .template-editor {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 520px;
+  }
+  .editor-pane { display: flex; flex-direction: column; }
+  .editor-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); margin-bottom: 8px; }
+  .editor-toolbar {
+    display: flex; gap: 6px; padding: 8px 10px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px 8px 0 0; flex-wrap: wrap;
+  }
+  .tool-btn {
+    padding: 4px 8px; border-radius: 5px; border: 1px solid transparent; background: transparent;
+    font-size: 12px; cursor: pointer; color: var(--text2); font-family: inherit; transition: all 0.1s;
+  }
+  .tool-btn:hover { background: var(--surface); border-color: var(--border); color: var(--text); }
+  .tool-btn.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-bg); }
+  .editor-textarea {
+    flex: 1; border-radius: 0 0 8px 8px; border-top: none; resize: none;
+    font-family: 'DM Mono', 'Courier New', monospace; font-size: 13px; padding: 14px;
+  }
+  .preview-pane {
+    background: white; border: 1px solid var(--border); border-radius: 8px; overflow-y: auto; position: relative;
+  }
+  .preview-inner { padding: 32px 36px; font-size: 14px; line-height: 1.8; }
+  .watermark {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-35deg);
+    font-size: 56px; font-weight: 700; opacity: 0.05; color: #000; pointer-events: none;
+    font-family: 'DM Serif Display', serif; letter-spacing: 4px; white-space: nowrap;
+  }
+
+  /* Timeline */
+  .timeline { padding: 0; list-style: none; }
+  .timeline-item { display: flex; gap: 14px; padding-bottom: 20px; position: relative; }
+  .timeline-item:last-child { padding-bottom: 0; }
+  .timeline-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex-shrink: 0;
+    margin-top: 6px; position: relative; z-index: 1;
+  }
+  .timeline-item::before {
+    content: ''; position: absolute; left: 4px; top: 16px; bottom: 0; width: 2px;
+    background: var(--border);
+  }
+  .timeline-item:last-child::before { display: none; }
+
+  /* Placeholder chips */
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip {
+    display: inline-flex; align-items: center; padding: 4px 10px; background: var(--accent-bg);
+    color: var(--accent); border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer;
+    border: 1px solid transparent; transition: all 0.15s;
+  }
+  .chip:hover { border-color: var(--accent); }
+
+  /* PDF preview */
+  .pdf-doc {
+    background: white; color: #1a1a1a; max-width: 680px; margin: 0 auto;
+    padding: 60px 64px; font-size: 14px; line-height: 1.9; min-height: 900px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1); position: relative;
+  }
+
+  /* Sidebar collapse on mobile not handled but structure ready */
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--text); color: var(--bg);
+    padding: 12px 18px; border-radius: 10px; font-size: 14px; z-index: 1000;
+    box-shadow: var(--shadow-lg); animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* Search */
+  .search-wrap { position: relative; }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); width: 16px; height: 16px; }
+  .search-wrap input { padding-left: 34px; }
+
+  /* Drag drop */
+  .upload-zone {
+    border: 2px dashed var(--border2); border-radius: var(--radius); padding: 32px;
+    text-align: center; cursor: pointer; transition: all 0.2s; background: var(--surface2);
+  }
+  .upload-zone:hover { border-color: var(--accent); background: var(--accent-bg); }
+
+  /* Progress */
+  .progress { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-bar { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; }
+
+  /* Chart */
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 100px; padding: 0 4px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.5s; }
+  .bar-label { font-size: 10px; color: var(--text3); }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* Toggle */
+  .toggle { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .toggle-track {
+    width: 36px; height: 20px; border-radius: 10px; background: var(--border2); position: relative;
+    transition: background 0.2s; flex-shrink: 0;
+  }
+  .toggle-track.on { background: var(--accent); }
+  .toggle-thumb {
+    position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%;
+    background: white; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle-track.on .toggle-thumb { left: 19px; }
+
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .main { margin-left: 0; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .template-editor { grid-template-columns: 1fr; }
+    .input-row { grid-template-columns: 1fr; }
+    .content { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ============================================================
+// DATA & STATE
+// ============================================================
+const PLACEHOLDERS = ['{{name}}','{{position}}','{{salary}}','{{currency}}','{{doj}}','{{company}}','{{department}}','{{manager}}','{{location}}','{{email}}','{{phone}}','{{probation}}','{{benefits}}','{{deadline}}'];
+
+const DEFAULT_TEMPLATE = `Dear {{name}},
+
+We are delighted to extend this offer of employment to you for the position of <strong>{{position}}</strong> at <strong>{{company}}</strong>.
+
+<strong>Compensation & Benefits</strong>
+Your annual compensation will be <strong>{{currency}} {{salary}}</strong>, paid on a monthly basis. This package includes:
+• Health insurance coverage for you and your family
+• {{benefits}}
+• Performance bonus up to 20% of annual salary
+• 21 days of paid time off annually
+
+<strong>Start Date</strong>
+We would like you to join us on <strong>{{doj}}</strong>. Your role will be based at our {{location}} office, reporting directly to {{manager}}.
+
+<strong>Department</strong>
+You will be part of the <strong>{{department}}</strong> team, playing a pivotal role in our growth initiatives.
+
+<strong>Probation Period</strong>
+This position includes a probation period of {{probation}} months, during which either party may terminate employment with 2 weeks' notice.
+
+Please confirm your acceptance by <strong>{{deadline}}</strong> by signing and returning this letter.
+
+We are excited about the prospect of you joining our team and look forward to your positive response.
+
+Warm regards,
+Human Resources
+{{company}}`;
+
+let state = {
+  auth: null,
+  theme: localStorage.getItem('theme') || 'light',
+  page: 'dashboard',
+  modal: null,
+  toast: null,
+  templates: [
+    { id: 1, name: 'Standard Engineer Offer', body: DEFAULT_TEMPLATE, createdAt: '2025-01-10', uses: 14 },
+    { id: 2, name: 'Executive Offer Letter', body: DEFAULT_TEMPLATE.replace('probation period of {{probation}} months', 'will not be subject to a probation period'), createdAt: '2025-01-15', uses: 5 },
+    { id: 3, name: 'Internship Offer', body: 'Dear {{name}},\n\nWe are pleased to offer you an internship position as <strong>{{position}}</strong> at <strong>{{company}}</strong>.\n\nYour stipend will be {{currency}} {{salary}} per month. Your internship starts on {{doj}} and runs for 3 months.\n\nPlease confirm by {{deadline}}.\n\nBest regards,\nHR Team', createdAt: '2025-02-01', uses: 9 }
+  ],
+  candidates: [
+    { id: 1, name: 'Priya Sharma', email: 'priya.s@gmail.com', phone: '+91 98765 43210', role: 'Senior Frontend Engineer', department: 'Engineering', status: 'active' },
+    { id: 2, name: 'Arjun Mehta', email: 'arjun.m@outlook.com', phone: '+91 87654 32109', role: 'Product Manager', department: 'Product', status: 'active' },
+    { id: 3, name: 'Sunita Rao', email: 'sunita.r@gmail.com', phone: '+91 76543 21098', role: 'Data Scientist', department: 'Analytics', status: 'active' },
+    { id: 4, name: 'Kiran Patel', email: 'kiran.p@yahoo.com', phone: '+91 65432 10987', role: 'Backend Engineer', department: 'Engineering', status: 'inactive' }
+  ],
+  offers: [
+    {
+      id: 1, candidateId: 1, templateId: 1, status: 'accepted',
+      data: { name: 'Priya Sharma', position: 'Senior Frontend Engineer', salary: '1,800,000', currency: '₹', doj: '2025-02-15', company: 'TechVentures Pvt Ltd', department: 'Engineering', manager: 'Rahul Gupta', location: 'Bengaluru', email: 'priya.s@gmail.com', phone: '+91 98765 43210', probation: '3', benefits: 'ESOPs, learning budget ₹50,000/year', deadline: '2025-01-20' },
+      createdAt: '2025-01-12', sentAt: '2025-01-12', respondedAt: '2025-01-18',
+      history: [
+        { version: 1, status: 'draft', timestamp: '2025-01-12T10:00:00', user: 'admin@hr.com', note: 'Created offer' },
+        { version: 2, status: 'sent', timestamp: '2025-01-12T14:30:00', user: 'admin@hr.com', note: 'Sent to candidate' },
+        { version: 3, status: 'accepted', timestamp: '2025-01-18T09:15:00', user: 'system', note: 'Candidate accepted offer' }
+      ]
+    },
+    {
+      id: 2, candidateId: 2, templateId: 2, status: 'sent',
+      data: { name: 'Arjun Mehta', position: 'Product Manager', salary: '2,400,000', currency: '₹', doj: '2025-03-01', company: 'TechVentures Pvt Ltd', department: 'Product', manager: 'CEO', location: 'Mumbai', email: 'arjun.m@outlook.com', phone: '+91 87654 32109', probation: '0', benefits: 'Stock options, executive benefits', deadline: '2025-02-10' },
+      createdAt: '2025-01-20', sentAt: '2025-01-21', respondedAt: null,
+      history: [
+        { version: 1, status: 'draft', timestamp: '2025-01-20T11:00:00', user: 'hr@techventures.com', note: 'Created offer' },
+        { version: 2, status: 'sent', timestamp: '2025-01-21T10:00:00', user: 'hr@techventures.com', note: 'Sent via email' }
+      ]
+    },
+    {
+      id: 3, candidateId: 3, templateId: 1, status: 'draft',
+      data: { name: 'Sunita Rao', position: 'Data Scientist', salary: '1,500,000', currency: '₹', doj: '2025-03-15', company: 'TechVentures Pvt Ltd', department: 'Analytics', manager: 'Data Lead', location: 'Hyderabad', email: 'sunita.r@gmail.com', phone: '+91 76543 21098', probation: '6', benefits: 'Health insurance, gym allowance', deadline: '2025-02-20' },
+      createdAt: '2025-01-25', sentAt: null, respondedAt: null,
+      history: [
+        { version: 1, status: 'draft', timestamp: '2025-01-25T09:30:00', user: 'admin@hr.com', note: 'Created draft offer' }
+      ]
+    },
+    {
+      id: 4, candidateId: 4, templateId: 1, status: 'rejected',
+      data: { name: 'Kiran Patel', position: 'Backend Engineer', salary: '1,200,000', currency: '₹', doj: '2025-02-01', company: 'TechVentures Pvt Ltd', department: 'Engineering', manager: 'Eng Lead', location: 'Pune', email: 'kiran.p@yahoo.com', phone: '+91 65432 10987', probation: '3', benefits: 'Health insurance', deadline: '2025-01-15' },
+      createdAt: '2025-01-08', sentAt: '2025-01-09', respondedAt: '2025-01-14',
+      history: [
+        { version: 1, status: 'draft', timestamp: '2025-01-08T10:00:00', user: 'admin@hr.com', note: 'Created offer' },
+        { version: 2, status: 'sent', timestamp: '2025-01-09T09:00:00', user: 'admin@hr.com', note: 'Sent to candidate' },
+        { version: 3, status: 'rejected', timestamp: '2025-01-14T17:00:00', user: 'system', note: 'Candidate declined offer' }
+      ]
+    }
+  ],
+  currentTemplate: { id: null, name: '', body: DEFAULT_TEMPLATE },
+  editOffer: null,
+  filterStatus: 'all',
+  searchQuery: '',
+  darkMode: localStorage.getItem('theme') === 'dark'
+};
+
+let nextId = 5;
+
+// ============================================================
+// ICONS
+// ============================================================
+const Icon = {
+  dashboard: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`,
+  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`,
+  offers: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
+  candidates: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`,
+  download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  send: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+  eye: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+  sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+  upload: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>`,
+  history: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg>`,
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`,
+  sign: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/><path d="m15 5 4 4"/></svg>`,
+  filter: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`,
+  building: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M16 6h-4"/><path d="M16 10h-4"/><path d="M8 6H7"/><path d="M8 10H7"/><path d="M8 14H7"/><path d="M8 18H7"/><path d="M16 14h-4"/><path d="M16 18h-4"/></svg>`,
+};
+
+// ============================================================
+// UTILS
+// ============================================================
+function applyPlaceholders(body, data) {
+  let result = body;
+  Object.keys(data).forEach(k => {
+    result = result.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), data[k] || `{{${k}}}`);
+  });
+  return result;
+}
+
+function fmt(dt) {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function fmtTime(dt) {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function showToast(msg) {
+  state.toast = msg;
+  render();
+  setTimeout(() => { state.toast = null; render(); }, 2800);
+}
+
+function setTheme(dark) {
+  state.darkMode = dark;
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  localStorage.setItem('theme', dark ? 'dark' : 'light');
+}
+
+// ============================================================
+// RENDER ENGINE
+// ============================================================
+function h(tag, attrs, ...children) {
+  return { tag, attrs: attrs || {}, children: children.flat(Infinity) };
+}
+
+function renderVNode(vn) {
+  if (vn === null || vn === undefined || vn === false) return document.createTextNode('');
+  if (typeof vn === 'string' || typeof vn === 'number') return document.createTextNode(String(vn));
+  const el = document.createElement(vn.tag);
+  Object.entries(vn.attrs).forEach(([k, v]) => {
+    if (k === 'innerHTML') { el.innerHTML = v; return; }
+    if (k === 'style' && typeof v === 'object') { Object.assign(el.style, v); return; }
+    if (k.startsWith('on') && typeof v === 'function') { el.addEventListener(k.slice(2).toLowerCase(), v); return; }
+    if (k === 'className') { el.className = v; return; }
+    if (v === true) el.setAttribute(k, ''); else if (v !== false && v !== null) el.setAttribute(k, v);
+  });
+  (vn.children || []).forEach(c => el.appendChild(renderVNode(c)));
+  return el;
+}
+
+function render() {
+  document.getElementById('app').innerHTML = '';
+  const tree = App();
+  document.getElementById('app').appendChild(renderVNode(tree));
+  document.documentElement.setAttribute('data-theme', state.darkMode ? 'dark' : 'light');
+}
+
+// ============================================================
+// COMPONENTS
+// ============================================================
+
+function Badge(status) {
+  const map = { draft:'badge-draft', sent:'badge-sent', accepted:'badge-accepted', rejected:'badge-rejected', pending:'badge-pending', active:'badge-accepted', inactive:'badge-draft' };
+  const icons = { draft:'○', sent:'→', accepted:'✓', rejected:'✗', pending:'⏳' };
+  return h('span', { className: `badge ${map[status] || 'badge-draft'}` }, (icons[status]||'') + ' ' + status.charAt(0).toUpperCase() + status.slice(1));
+}
+
+function NavItem(icon, label, page, badge) {
+  const active = state.page === page;
+  return h('div', { className: `nav-item ${active ? 'active' : ''}`, onClick: () => { state.page = page; render(); } },
+    h('span', { innerHTML: icon }), label,
+    badge ? h('span', { className: 'nav-badge' }, badge) : null
+  );
+}
+
+function Sidebar() {
+  const draftCount = state.offers.filter(o => o.status === 'draft').length;
+  return h('aside', { className: 'sidebar' },
+    h('div', { className: 'sidebar-logo' },
+      h('div', { className: 'logo-text' }, '⬡ OfferFlow'),
+      h('div', { className: 'logo-sub' }, 'HR Letter Suite')
+    ),
+    h('nav', { className: 'nav' },
+      h('div', { className: 'nav-section' }, 'Main'),
+      NavItem(Icon.dashboard, 'Dashboard', 'dashboard'),
+      NavItem(Icon.offers, 'Offers', 'offers', draftCount > 0 ? draftCount : null),
+      NavItem(Icon.candidates, 'Candidates', 'candidates'),
+      NavItem(Icon.template, 'Templates', 'templates'),
+      h('div', { className: 'nav-section' }, 'Tools'),
+      NavItem(Icon.upload, 'Bulk Upload', 'bulk'),
+      NavItem(Icon.settings, 'Settings', 'settings')
+    ),
+    h('div', { className: 'sidebar-footer' },
+      h('div', { className: 'user-pill' },
+        h('div', { className: 'avatar' }, state.auth ? state.auth.name.slice(0,2).toUpperCase() : 'HR'),
+        h('div', {},
+          h('div', { className: 'user-name' }, state.auth ? state.auth.name : 'HR Admin'),
+          h('div', { className: 'user-role' }, 'Super Admin')
+        )
+      )
+    )
+  );
+}
+
+function Topbar(title, actions) {
+  return h('header', { className: 'topbar' },
+    h('div', { className: 'topbar-title' }, title),
+    h('div', { className: 'topbar-actions' },
+      ...(actions || []),
+      h('button', {
+        className: 'btn btn-ghost btn-sm',
+        innerHTML: state.darkMode ? Icon.sun : Icon.moon,
+        onClick: () => { setTheme(!state.darkMode); render(); }
+      })
+    )
+  );
+}
+
+// ---- DASHBOARD ----
+function Dashboard() {
+  const total = state.offers.length;
+  const accepted = state.offers.filter(o => o.status === 'accepted').length;
+  const sent = state.offers.filter(o => o.status === 'sent').length;
+  const draft = state.offers.filter(o => o.status === 'draft').length;
+  const rate = total ? Math.round(accepted / total * 100) : 0;
+  const months = ['Sep','Oct','Nov','Dec','Jan','Feb'];
+  const counts = [2,4,3,5,8,6];
+  const maxC = Math.max(...counts);
+
+  return h('div', {},
+    Topbar('Dashboard', [
+      h('button', { className: 'btn btn-primary btn-sm', onClick: () => { state.modal = 'newOffer'; state.editOffer = null; render(); }, innerHTML: Icon.plus + ' New Offer' })
+    ]),
+    h('div', { className: 'content' },
+      h('div', { className: 'stats-grid' },
+        StatCard('Total Offers', total, '↑ 12% this month', '#e8f4ec', '#2d5a3d', Icon.offers),
+        StatCard('Accepted', accepted, `${rate}% acceptance rate`, '#e8f4ec', '#2d5a3d', Icon.check),
+        StatCard('Pending Sent', sent, 'Awaiting response', '#eaf4fd', '#1a5276', Icon.send),
+        StatCard('Drafts', draft, 'Ready to send', '#fef9ec', '#a07020', Icon.edit)
+      ),
+      h('div', { style: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' } },
+        // Recent offers
+        h('div', { className: 'card' },
+          h('div', { className: 'card-header' },
+            h('div', { style: { display:'flex', alignItems:'center', justifyContent:'space-between' } },
+              h('div', { className: 'card-title' }, 'Recent Offers'),
+              h('button', { className: 'btn btn-ghost btn-xs', onClick: () => { state.page = 'offers'; render(); } }, 'View all →')
+            )
+          ),
+          h('div', { className: 'card-body', style: { padding: '0' } },
+            h('div', { className: 'table-wrap' },
+              h('table', {},
+                h('thead', {}, h('tr', {},
+                  h('th', {}, 'Candidate'), h('th', {}, 'Role'), h('th', {}, 'Status'), h('th', {}, 'Date')
+                )),
+                h('tbody', {}, ...state.offers.slice(0,4).map(o => {
+                  const cand = state.candidates.find(c => c.id === o.candidateId);
+                  return h('tr', { onClick: () => { state.modal = 'viewOffer'; state.editOffer = o; render(); }, style: { cursor:'pointer' } },
+                    h('td', {}, h('strong', {}, o.data.name)),
+                    h('td', { style: { color: 'var(--text2)', fontSize:'13px' } }, o.data.position),
+                    h('td', {}, Badge(o.status)),
+                    h('td', { style: { color:'var(--text3)', fontSize:'12px' } }, fmt(o.createdAt))
+                  );
+                }))
+              )
+            )
+          )
+        ),
+        // Mini chart
+        h('div', { className: 'card' },
+          h('div', { className: 'card-header' },
+            h('div', { className: 'card-title' }, 'Offer Trend'),
+            h('div', { className: 'card-sub' }, 'Last 6 months')
+          ),
+          h('div', { className: 'card-body' },
+            h('div', { className: 'bar-chart' },
+              ...months.map((m,i) => h('div', { className: 'bar-col' },
+                h('div', { className: 'bar', style: { height: `${Math.round(counts[i]/maxC*80)+8}px` } }),
+                h('div', { className: 'bar-label' }, m)
+              ))
+            ),
+            h('div', { className: 'divider' }),
+            h('div', { style: { fontSize:'13px', color:'var(--text2)' } },
+              h('div', { style: { display:'flex', justifyContent:'space-between', marginBottom:'8px' } },
+                h('span', {}, 'Templates'), h('strong', {}, state.templates.length)
+              ),
+              h('div', { style: { display:'flex', justifyContent:'space-between', marginBottom:'8px' } },
+                h('span', {}, 'Candidates'), h('strong', {}, state.candidates.length)
+              ),
+              h('div', { style: { display:'flex', justifyContent:'space-between' } },
+                h('span', {}, 'Acceptance'), h('strong', { style:{ color:'var(--accent)' } }, rate+'%')
+              )
+            )
+          )
+        )
+      )
+    )
+  );
+}
+
+function StatCard(label, value, sub, bg, color, icon) {
+  return h('div', { className: 'stat-card' },
+    h('div', { className: 'stat-icon', style: { background: bg } },
+      h('span', { innerHTML: icon, style: { color, width:'18px', height:'18px', display:'block' } })
+    ),
+    h('div', { className: 'stat-label' }, label),
+    h('div', { className: 'stat-value' }, value),
+    h('div', { className: 'stat-change', style: { color: 'var(--text3)' } }, sub)
+  );
+}
+
+// ---- OFFERS ----
+function OffersPage() {
+  let filtered = state.offers;
+  if (state.filterStatus !== 'all') filtered = filtered.filter(o => o.status === state.filterStatus);
+  if (state.searchQuery) filtered = filtered.filter(o => o.data.name.toLowerCase().includes(state.searchQuery.toLowerCase()) || o.data.position.toLowerCase().includes(state.searchQuery.toLowerCase()));
+
+  return h('div', {},
+    Topbar('Offer Letters', [
+      h('button', { className: 'btn btn-primary btn-sm', onClick: () => { state.modal = 'newOffer'; state.editOffer = null; render(); }, innerHTML: Icon.plus + ' New Offer' })
+    ]),
+    h('div', { className: 'content' },
+      h('div', { className: 'card' },
+        h('div', { className: 'card-body', style: { paddingBottom: '0' } },
+          h('div', { style: { display:'flex', gap:'12px', marginBottom:'16px', flexWrap:'wrap' } },
+            h('div', { className: 'search-wrap', style:{ flex:'1', minWidth:'200px' } },
+              h('span', { innerHTML: Icon.search }),
+              h('input', { type:'text', placeholder:'Search offers...', value: state.searchQuery,
+                onInput: e => { state.searchQuery = e.target.value; render(); }
+              })
+            ),
+            h('select', { style: { width:'150px' }, onChange: e => { state.filterStatus = e.target.value; render(); } },
+              h('option', { value:'all' }, 'All Status'),
+              h('option', { value:'draft' }, 'Draft'),
+              h('option', { value:'sent' }, 'Sent'),
+              h('option', { value:'accepted' }, 'Accepted'),
+              h('option', { value:'rejected' }, 'Rejected')
+            )
+          )
+        ),
+        h('div', { className: 'table-wrap' },
+          h('table', {},
+            h('thead', {}, h('tr', {},
+              h('th', {}, 'Candidate'), h('th', {}, 'Position'), h('th', {}, 'Salary'), h('th', {}, 'DOJ'),
+              h('th', {}, 'Status'), h('th', {}, 'Created'), h('th', {}, 'Actions')
+            )),
+            h('tbody', {}, ...filtered.map(o =>
+              h('tr', {},
+                h('td', {},
+                  h('div', { style:{ fontWeight:'500' } }, o.data.name),
+                  h('div', { style:{ fontSize:'12px', color:'var(--text3)' } }, o.data.email || '')
+                ),
+                h('td', {}, o.data.position),
+                h('td', {}, h('span', { style:{ fontWeight:'500' } }, o.data.currency + ' ' + o.data.salary)),
+                h('td', {}, fmt(o.data.doj)),
+                h('td', {}, Badge(o.status)),
+                h('td', { style:{ color:'var(--text3)', fontSize:'12px' } }, fmt(o.createdAt)),
+                h('td', {},
+                  h('div', { style:{ display:'flex', gap:'6px' } },
+                    h('button', { className:'btn btn-ghost btn-xs', innerHTML: Icon.eye, title:'Preview',
+                      onClick: () => { state.modal = 'viewOffer'; state.editOffer = o; render(); }
+                    }),
+                    h('button', { className:'btn btn-ghost btn-xs', innerHTML: Icon.edit, title:'Edit',
+                      onClick: () => { state.modal = 'editOffer'; state.editOffer = JSON.parse(JSON.stringify(o)); render(); }
+                    }),
+                    o.status === 'draft' ? h('button', { className:'btn btn-ghost btn-xs', innerHTML: Icon.send, title:'Send Offer',
+                      onClick: () => sendOffer(o.id)
+                    }) : null,
+                    h('button', { className:'btn btn-ghost btn-xs', innerHTML: Icon.download, title:'Download PDF',
+                      onClick: () => downloadPDF(o)
+                    }),
+                    h('button', { className:'btn btn-ghost btn-xs', innerHTML: Icon.history, title:'History',
+                      onClick: () => { state.modal = 'history'; state.editOffer = o; render(); }
+                    })
+                  )
+                )
+              )
+            ))
+          )
+        )
+      )
+    )
+  );
+}
+
+function sendOffer(id) {
+  const o = state.offers.find(x => x.id === id);
+  if (!o) return;
+  o.status = 'sent';
+  o.sentAt = new Date().toISOString();
+  o.history.push({ version: o.history.length+1, status:'sent', timestamp: new Date().toISOString(), user: state.auth?.email || 'admin@hr.com', note:'Offer sent to candidate via email' });
+  showToast('Offer sent successfully!');
+}
+
+function downloadPDF(offer) {
+  const template = state.templates.find(t => t.id === offer.templateId);
+  if (!template) return;
+  const body = applyPlaceholders(template.body, offer.data);
+  const printWin = window.open('', '_blank');
+  printWin.document.write(`<!DOCTYPE html><html><head><title>Offer Letter - ${offer.data.name}</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 680px; margin: 40px auto; padding: 0 40px; line-height: 1.9; color: #1a1a1a; }
+    h1,h2,h3 { font-family: Georgia, serif; }
+    .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-35deg); font-size: 80px; opacity: 0.04; font-weight: 700; pointer-events: none; }
+    @media print { .no-print { display: none; } }
+  </style></head><body>
+  ${offer.status === 'draft' ? '<div class="watermark">DRAFT</div>' : ''}
+  <div style="text-align:right;margin-bottom:40px;color:#555;font-size:13px;">Date: ${fmt(new Date().toISOString())}</div>
+  <div style="margin-bottom:32px;font-size:13px;color:#555;">Ref: OF-${String(offer.id).padStart(4,'0')}</div>
+  ${body.split('\n').map(l => l.trim() ? `<p>${l}</p>` : '<br/>').join('')}
+  ${offer.status !== 'draft' ? `<div style="margin-top:60px;"><p>__________________________</p><p style="font-size:13px;color:#555;">Candidate Signature & Date</p></div>` : ''}
+  <button class="no-print" onclick="window.print()" style="margin-top:30px;padding:10px 20px;background:#2d5a3d;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;">Print / Save as PDF</button>
+  </body></html>`);
+  printWin.document.close();
+  showToast('PDF preview opened — use Print to save');
+}
+
+// ---- TEMPLATES ----
+function TemplatesPage() {
+  return h('div', {},
+    Topbar('Templates', [
+      h('button', { className:'btn btn-primary btn-sm',
+        onClick: () => { state.currentTemplate = { id: null, name: '', body: DEFAULT_TEMPLATE }; state.modal = 'editTemplate'; render(); },
+        innerHTML: Icon.plus + ' New Template'
+      })
+    ]),
+    h('div', { className: 'content' },
+      h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:'16px' } },
+        ...state.templates.map(t =>
+          h('div', { className: 'card' },
+            h('div', { className: 'card-body' },
+              h('div', { style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'8px' } },
+                h('div', { className: 'card-title', style:{fontSize:'16px'} }, t.name),
+                h('div', { className: 'badge badge-accepted' }, t.uses + ' uses')
+              ),
+              h('div', { style:{ fontSize:'13px', color:'var(--text3)', marginBottom:'16px' } }, 'Created ' + fmt(t.createdAt)),
+              h('div', { style:{ fontSize:'12px', background:'var(--bg)', borderRadius:'6px', padding:'8px 10px', color:'var(--text3)', marginBottom:'16px', fontFamily:'monospace', overflow:'hidden', maxHeight:'60px', textOverflow:'ellipsis' } },
+                t.body.slice(0,120) + '...'
+              ),
+              h('div', { style:{ display:'flex', gap:'8px' } },
+                h('button', { className:'btn btn-secondary btn-sm', style:{flex:'1'}, onClick: () => { state.currentTemplate = JSON.parse(JSON.stringify(t)); state.modal = 'editTemplate'; render(); }, innerHTML: Icon.edit + ' Edit' }),
+                h('button', { className:'btn btn-primary btn-sm', style:{flex:'1'}, onClick: () => { state.modal = 'newOffer'; state.editOffer = { templateId: t.id }; render(); }, innerHTML: Icon.plus + ' Use' })
+              )
+            )
+          )
+        )
+      )
+    )
+  );
+}
+
+// ---- CANDIDATES ----
+function CandidatesPage() {
+  return h('div', {},
+    Topbar('Candidates', [
+      h('button', { className:'btn btn-primary btn-sm', onClick: () => { state.modal = 'newCandidate'; render(); }, innerHTML: Icon.plus + ' Add Candidate' })
+    ]),
+    h('div', { className: 'content' },
+      h('div', { className: 'card' },
+        h('div', { className: 'table-wrap' },
+          h('table', {},
+            h('thead', {}, h('tr', {},
+              h('th', {}, 'Name'), h('th', {}, 'Email'), h('th', {}, 'Phone'), h('th', {}, 'Role'),
+              h('th', {}, 'Department'), h('th', {}, 'Status'), h('th', {}, 'Actions')
+            )),
+            h('tbody', {}, ...state.candidates.map(c => {
+              const offerCount = state.offers.filter(o => o.candidateId === c.id).length;
+              return h('tr', {},
+                h('td', {},
+                  h('div', { style:{display:'flex', alignItems:'center', gap:'10px'} },
+                    h('div', { className:'avatar', style:{width:'32px',height:'32px',fontSize:'12px'} }, c.name.slice(0,2).toUpperCase()),
+                    h('strong', {}, c.name)
+                  )
+                ),
+                h('td', { style:{color:'var(--text2)',fontSize:'13px'} }, c.email),
+                h('td', { style:{color:'var(--text3)',fontSize:'13px'} }, c.phone),
+                h('td', {}, c.role),
+                h('td', { style:{color:'var(--text3)'} }, c.department),
+                h('td', {}, Badge(c.status)),
+                h('td', {},
+                  h('div', { style:{display:'flex',gap:'6px'} },
+                    h('button', { className:'btn btn-secondary btn-xs', onClick: () => { state.modal='newOffer'; state.editOffer={candidateId:c.id}; render(); } }, '+ Offer'),
+                    h('button', { className:'btn btn-ghost btn-xs', innerHTML: Icon.edit, onClick: () => { state.modal='editCandidate'; state.editOffer=JSON.parse(JSON.stringify(c)); render(); } })
+                  )
+                )
+              );
+            }))
+          )
+        )
+      )
+    )
+  );
+}
+
+// ---- BULK UPLOAD ----
+function BulkPage() {
+  return h('div', {},
+    Topbar('Bulk Upload'),
+    h('div', { className: 'content' },
+      h('div', { className: 'card' },
+        h('div', { className: 'card-body' },
+          h('h2', { style:{fontFamily:'DM Serif Display',marginBottom:'6px'} }, 'CSV Bulk Upload'),
+          h('p', { style:{color:'var(--text2)',marginBottom:'24px'} }, 'Upload a CSV file to create multiple candidates and generate offers at once.'),
+          h('div', { className: 'upload-zone', onClick: () => showToast('CSV import: feature simulated — connect to real backend') },
+            h('span', { innerHTML: Icon.upload, style:{width:'40px',height:'40px',color:'var(--text3)',display:'block',margin:'0 auto 12px'} }),
+            h('div', { style:{fontWeight:'500',marginBottom:'4px'} }, 'Drop CSV file here or click to browse'),
+            h('div', { style:{fontSize:'13px',color:'var(--text3)'} }, 'Supports .csv files up to 10MB')
+          ),
+          h('div', { className: 'divider' }),
+          h('div', { style:{marginBottom:'12px', fontWeight:'500'} }, 'Expected CSV Format:'),
+          h('pre', { style:{background:'var(--bg)',borderRadius:'8px',padding:'16px',fontSize:'13px',color:'var(--text2)',overflowX:'auto'} },
+            'name,email,phone,position,department,salary,currency,doj,manager,location,benefits,deadline\nPriya Sharma,priya@email.com,+91 98765 43210,Engineer,Engineering,1800000,₹,2025-03-01,Rahul,Bengaluru,"Health insurance",2025-02-15'
+          ),
+          h('div', { style:{marginTop:'16px',display:'flex',gap:'10px'} },
+            h('button', { className:'btn btn-primary', onClick: () => showToast('Template CSV downloaded') }, Icon.download + ' Download Template'),
+            h('button', { className:'btn btn-secondary', onClick: () => showToast('Sample CSV downloaded') }, 'Download Sample')
+          )
+        )
+      )
+    )
+  );
+}
+
+// ---- SETTINGS ----
+function SettingsPage() {
+  return h('div', {},
+    Topbar('Settings'),
+    h('div', { className: 'content' },
+      h('div', { style:{display:'grid',gap:'20px'} },
+        h('div', { className: 'card' },
+          h('div', { className: 'card-body' },
+            h('h3', { style:{fontFamily:'DM Serif Display',marginBottom:'16px'} }, 'Appearance'),
+            h('div', { className: 'toggle', onClick: () => { setTheme(!state.darkMode); render(); } },
+              h('div', { className: `toggle-track ${state.darkMode ? 'on' : ''}` }, h('div', { className:'toggle-thumb' })),
+              h('span', { style:{fontSize:'14px'} }, 'Dark Mode')
+            )
+          )
+        ),
+        h('div', { className: 'card' },
+          h('div', { className: 'card-body' },
+            h('h3', { style:{fontFamily:'DM Serif Display',marginBottom:'16px'} }, 'Company Profile'),
+            h('div', { className:'input-row' },
+              h('div', { className:'form-group' }, h('label', {}, 'Company Name'), h('input', { type:'text', value:'TechVentures Pvt Ltd' })),
+              h('div', { className:'form-group' }, h('label', {}, 'HR Email'), h('input', { type:'email', value:'hr@techventures.com' }))
+            ),
+            h('button', { className:'btn btn-primary', onClick: () => showToast('Settings saved!') }, '✓ Save Changes')
+          )
+        ),
+        h('div', { className: 'card' },
+          h('div', { className: 'card-body' },
+            h('h3', { style:{fontFamily:'DM Serif Display',marginBottom:'16px'} }, 'Email Configuration'),
+            h('div', { className:'form-group' }, h('label', {}, 'SMTP Host'), h('input', { type:'text', placeholder:'smtp.gmail.com' })),
+            h('div', { className:'input-row' },
+              h('div', { className:'form-group' }, h('label', {}, 'SMTP Port'), h('input', { type:'number', value:'587' })),
+              h('div', { className:'form-group' }, h('label', {}, 'From Email'), h('input', { type:'email', placeholder:'noreply@company.com' }))
+            ),
+            h('button', { className:'btn btn-secondary', onClick: () => showToast('Test email sent!') }, '→ Send Test Email')
+          )
+        )
+      )
+    )
+  );
+}
+
+// ---- MODALS ----
+
+function ModalNewOffer() {
+  let prefill = state.editOffer || {};
+  const cand = prefill.candidateId ? state.candidates.find(c => c.id === prefill.candidateId) : null;
+  let fd = {
+    candidateId: prefill.candidateId || '',
+    templateId: prefill.templateId || (state.templates[0]?.id || ''),
+    name: cand?.name || '', position: cand?.role || '', salary: '', currency: '₹',
+    doj: '', company: 'TechVentures Pvt Ltd', department: cand?.department || '',
+    manager: '', location: 'Bengaluru', email: cand?.email || '', phone: cand?.phone || '',
+    probation: '3', benefits: 'Health insurance, annual bonus', deadline: ''
+  };
+
+  function field(label, key, type='text', placeholder='') {
+    return h('div', { className:'form-group' },
+      h('label', {}, label),
+      h('input', { type, placeholder, value: fd[key],
+        onInput: e => { fd[key] = e.target.value; }
+      })
+    );
+  }
+
+  function submit() {
+    if (!fd.name || !fd.position || !fd.salary || !fd.doj) { showToast('Please fill required fields'); return; }
+    const o = {
+      id: nextId++,
+      candidateId: parseInt(fd.candidateId) || null,
+      templateId: parseInt(fd.templateId),
+      status: 'draft',
+      data: { ...fd },
+      createdAt: new Date().toISOString(), sentAt: null, respondedAt: null,
+      history: [{ version:1, status:'draft', timestamp: new Date().toISOString(), user: state.auth?.email || 'admin@hr.com', note:'Created offer' }]
+    };
+    state.offers.unshift(o);
+    state.modal = null;
+    showToast('Offer created successfully!');
+  }
+
+  return h('div', { className:'overlay', onClick: e => { if(e.target.className==='overlay'){ state.modal=null; render(); } } },
+    h('div', { className:'modal modal-lg' },
+      h('div', { className:'modal-header' },
+        h('div', { className:'modal-title' }, 'Create New Offer'),
+        h('button', { className:'btn btn-ghost btn-xs', innerHTML: Icon.close, onClick: () => { state.modal=null; render(); } })
+      ),
+      h('div', { className:'modal-body' },
+        h('div', { className:'input-row' },
+          h('div', { className:'form-group' },
+            h('label', {}, 'Candidate'),
+            h('select', { onChange: e => {
+              fd.candidateId = e.target.value;
+              const c = state.candidates.find(x => x.id === parseInt(e.target.value));
+              if (c) { fd.name = c.name; fd.email = c.email; fd.phone = c.phone; fd.position = c.role; fd.department = c.department; }
+            } },
+              h('option', { value:'' }, '— Select Candidate —'),
+              ...state.candidates.map(c => h('option', { value: c.id, selected: fd.candidateId == c.id }, c.name))
+            )
+          ),
+          h('div', { className:'form-group' },
+            h('label', {}, 'Template'),
+            h('select', { onChange: e => { fd.templateId = e.target.value; } },
+              ...state.templates.map(t => h('option', { value: t.id, selected: fd.templateId == t.id }, t.name))
+            )
+          )
+        ),
+        h('div', { className:'input-row' },
+          field('Candidate Name *', 'name', 'text', 'Full name'),
+          field('Position *', 'position', 'text', 'Job title')
+        ),
+        h('div', { className:'input-row' },
+          h('div', { className:'form-group' }, h('label',{}, 'Salary *'),
+            h('div', { style:{display:'flex',gap:'8px'} },
+              h('select', { style:{width:'80px'}, onChange: e => { fd.currency = e.target.value; } },
+                h('option', {}, '₹'), h('option', {}, '$'), h('option', {}, '€'), h('option', {}, '£')
+              ),
+              h('input', { type:'text', placeholder:'e.g. 1,800,000', style:{flex:'1'}, onInput: e => { fd.salary = e.target.value; } })
+            )
+          ),
+          field('Date of Joining *', 'doj', 'date')
+        ),
+        h('div', { className:'input-row' },
+          field('Department', 'department', 'text', 'e.g. Engineering'),
+          field('Manager', 'manager', 'text', 'Reporting manager name')
+        ),
+        h('div', { className:'input-row' },
+          field('Location', 'location', 'text', 'Office location'),
+          field('Probation (months)', 'probation', 'number')
+        ),
+        h('div', { className:'input-row' },
+          field('Candidate Email', 'email', 'email'),
+          field('Response Deadline', 'deadline', 'date')
+        ),
+        h('div', { className:'form-group' }, h('label',{},'Benefits'), h('textarea', { rows:'2', placeholder:'List key benefits...', onInput: e => { fd.benefits = e.target.value; } }, fd.benefits))
+      ),
+      h('div', { className:'modal-footer' },
+        h('button', { className:'btn btn-secondary', onClick: () => { state.modal=null; render(); } }, 'Cancel'),
+        h('button', { className:'btn btn-primary', onClick: submit, innerHTML: Icon.plus + ' Create Offer' })
+      )
+    )
+  );
+}
+
+function ModalViewOffer() {
+  const o = state.editOffer;
+  if (!o) return null;
+  const template = state.templates.find(t => t.id === o.templateId);
+  const body = template ? applyPlaceholders(template.body, o.data) : 'Template not found';
+
+  return h('div', { className:'overlay', onClick: e => { if(e.target.className==='overlay'){ state.modal=null; render(); } } },
+    h('div', { className:'modal modal-lg' },
+      h('div', { className:'modal-header' },
+        h('div', {},
+          h('div', { className:'modal-title' }, o.data.name + ' — Offer Preview'),
+          h('div', { style:{fontSize:'13px',color:'var(--text3)',marginTop:'2px'} }, 'OF-' + String(o.id).padStart(4,'0') + ' · ' + Badge(o.status).tag )
+        ),
+        h('button', { className:'btn btn-ghost btn-xs', innerHTML: Icon.close, onClick: () => { state.modal=null; render(); } })
+      ),
+      h('div', { className:'modal-body', style:{padding:'0'} },
+        h('div', { className:'preview-pane', style:{border:'none',borderRadius:'0',maxHeight:'580px'} },
+          o.status === 'draft' ? h('div', { className:'watermark' }, 'DRAFT') : null,
+          h('div', { className:'preview-inner' },
+            h('div', { innerHTML: body.split('\n').map(l => l.trim() ? `<p style="margin-bottom:10px">${l}</p>` : '<br/>').join('') })
+          )
+        )
+      ),
+      h('div', { className:'modal-footer' },
+        o.status === 'draft' ? h('button', { className:'btn btn-primary', onClick: () => { sendOffer(o.id); state.modal=null; render(); }, innerHTML: Icon.send + ' Send Offer' }) : null,
+        o.status === 'sent' ? h('button', { className:'btn btn-secondary', style:{color:'var(--accent)',borderColor:'var(--accent)'}, onClick: () => {
+          o.status='accepted'; o.respondedAt=new Date().toISOString();
+          o.history.push({version:o.history.length+1,status:'accepted',timestamp:new Date().toISOString(),user:'system',note:'Marked as accepted'});
+          state.modal=null; showToast('Offer marked as accepted');
+        }, innerHTML: Icon.check + ' Mark Accepted' }) : null,
+        o.status === 'sent' ? h('button', { className:'btn btn-danger btn-sm', onClick: () => {
+          o.status='rejected'; o.respondedAt=new Date().toISOString();
+          o.history.push({version:o.history.length+1,status:'rejected',timestamp:new Date().toISOString(),user:'system',note:'Marked as rejected'});
+          state.modal=null; showToast('Offer marked as rejected');
+        } }, 'Mark Rejected') : null,
+        h('button', { className:'btn btn-secondary', onClick: () => downloadPDF(o), innerHTML: Icon.download + ' Download PDF' }),
+        h('button', { className:'btn btn-ghost btn-sm', onClick: () => { state.modal=null; render(); } }, 'Close')
+      )
+    )
+  );
+}
+
+function ModalEditOffer() {
+  const o = state.editOffer;
+  if (!o) return null;
+  const template = state.templates.find(t => t.id === o.templateId);
+  let previewBody = template ? applyPlaceholders(template.body, o.data) : '';
+  let customBody = template ? template.body : '';
+
+  function updatePreview() {
+    previewBody = applyPlaceholders(customBody, o.data);
+  }
+
+  function saveOffer() {
+    const idx = state.offers.findIndex(x => x.id === o.id);
+    if (idx !== -1) {
+      state.offers[idx] = o;
+      state.offers[idx].history.push({ version: o.history.length+1, status: o.status, timestamp: new Date().toISOString(), user: state.auth?.email || 'admin@hr.com', note: 'Offer edited' });
+    }
+    state.modal = null;
+    showToast('Offer saved!');
+  }
+
+  return h('div', { className:'overlay', onClick: e => { if(e.target.className==='overlay'){ state.modal=null; render(); } } },
+    h('div', { className:'modal modal-lg' },
+      h('div', { className:'modal-header' },
+        h('div', { className:'modal-title' }, 'Edit Offer — ' + o.data.name),
+        h('button', { className:'btn btn-ghost btn-xs', innerHTML: Icon.close, onClick: () => { state.modal=null; render(); } })
+      ),
+      h('div', { className:'modal-body' },
+        h('div', { className:'template-editor' },
+          h('div', { className:'editor-pane' },
+            h('div', { className:'editor-label' }, 'Offer Data'),
+            h('div', { style:{display:'grid',gap:'10px',flex:'1',overflowY:'auto'} },
+              ...Object.keys(o.data).filter(k => k !== 'candidateId').map(k =>
+                h('div', { className:'form-group', style:{marginBottom:'0'} },
+                  h('label', { style:{fontSize:'12px'} }, k),
+                  h('input', { type:'text', value: o.data[k],
+                    onInput: e => { o.data[k] = e.target.value; }
+                  })
+                )
+              )
+            )
+          ),
+          h('div', { className:'editor-pane' },
+            h('div', { className:'editor-label' }, 'Live Preview'),
+            h('div', { className:'preview-pane', style:{flex:'1'} },
+              o.status === 'draft' ? h('div', { className:'watermark' }, 'DRAFT') : null,
+              h('div', { className:'preview-inner',
+                innerHTML: previewBody.split('\n').map(l => l.trim() ? `<p style="margin-bottom:8px">${l}</p>` : '<br/>').join('')
+              })
+            )
+          )
+        )
+      ),
+      h('div', { className:'modal-footer' },
+        h('button', { className:'btn btn-secondary', onClick: () => { state.modal=null; render(); } }, 'Cancel'),
+        h('button', { className:'btn btn-primary', onClick: saveOffer }, '✓ Save Changes')
+      )
+    )
+  );
+}
+
+function ModalEditTemplate() {
+  const t = state.currentTemplate;
+  let body = t.body;
+  let name = t.name;
+  let previewData = { name:'Priya Sharma', position:'Software Engineer', salary:'1,800,000', currency:'₹', doj:'March 15, 2025', company:'TechVentures Pvt Ltd', department:'Engineering', manager:'Rahul Gupta', location:'Bengaluru', email:'priya@example.com', phone:'+91 98765 43210', probation:'3', benefits:'Health insurance, ESOP', deadline:'March 1, 2025' };
+
+  function save() {
+    if (!name) { showToast('Template name required'); return; }
+    if (t.id) {
+      const idx = state.templates.findIndex(x => x.id === t.id);
+      state.templates[idx] = { ...t, name, body };
+    } else {
+      state.templates.push({ id: nextId++, name, body, createdAt: new Date().toISOString().split('T')[0], uses: 0 });
+    }
+    state.modal = null;
+    showToast('Template saved!');
+  }
+
+  const insertPlaceholder = (ph) => {
+    body = body + ph;
+    render();
+  };
+
+  return h('div', { className:'overlay', onClick: e => { if(e.target.className==='overlay'){ state.modal=null; render(); } } },
+    h('div', { className:'modal modal-lg' },
+      h('div', { className:'modal-header' },
+        h('div', { className:'modal-title' }, t.id ? 'Edit Template' : 'New Template'),
+        h('button', { className:'btn btn-ghost btn-xs', innerHTML: Icon.close, onClick: () => { state.modal=null; render(); } })
+      ),
+      h('div', { className:'modal-body' },
+        h('div', { className:'form-group' },
+          h('label', {}, 'Template Name'),
+          h('input', { type:'text', placeholder:'e.g. Standard Offer Letter', value: name, onInput: e => { name = e.target.value; } })
+        ),
+        h('div', { style:{marginBottom:'10px'} },
+          h('div', { style:{fontSize:'12px',color:'var(--text3)',marginBottom:'6px'} }, 'Click to insert placeholder:'),
+          h('div', { className:'chips' },
+            ...PLACEHOLDERS.map(ph => h('div', { className:'chip', onClick: () => insertPlaceholder(ph) }, ph))
+          )
+        ),
+        h('div', { className:'template-editor', style:{height:'400px'} },
+          h('div', { className:'editor-pane' },
+            h('div', { className:'editor-label' }, 'Template Body (HTML supported)'),
+            h('textarea', { className:'editor-textarea', value: body,
+              onInput: e => { body = e.target.value; }
+            }, body)
+          ),
+          h('div', { className:'editor-pane' },
+            h('div', { className:'editor-label' }, 'Preview (sample data)'),
+            h('div', { className:'preview-pane', style:{flex:'1'} },
+              h('div', { className:'preview-inner',
+                innerHTML: applyPlaceholders(body, previewData).split('\n').map(l => l.trim() ? `<p style="margin-bottom:8px">${l}</p>` : '<br/>').join('')
+              })
+            )
+          )
+        )
+      ),
+      h('div', { className:'modal-footer' },
+        h('button', { className:'btn btn-secondary', onClick: () => { state.modal=null; render(); } }, 'Cancel'),
+        h('button', { className:'btn btn-primary', onClick: save }, '✓ Save Template')
+      )
+    )
+  );
+}
+
+function ModalHistory() {
+  const o = state.editOffer;
+  if (!o) return null;
+  return h('div', { className:'overlay', onClick: e => { if(e.target.className==='overlay'){ state.modal=null; render(); } } },
+    h('div', { className:'modal' },
+      h('div', { className:'modal-header' },
+        h('div', { className:'modal-title' }, 'Status History — ' + o.data.name),
+        h('button', { className:'btn btn-ghost btn-xs', innerHTML: Icon.close, onClick: () => { state.modal=null; render(); } })
+      ),
+      h('div', { className:'modal-body' },
+        h('ul', { className:'timeline' },
+          ...[...o.history].reverse().map(ev =>
+            h('li', { className:'timeline-item' },
+              h('div', { className:'timeline-dot', style:{background: ev.status==='accepted'?'var(--accent)':ev.status==='rejected'?'var(--danger)':ev.status==='sent'?'var(--info)':'var(--border2)'} }),
+              h('div', {},
+                h('div', { style:{display:'flex',alignItems:'center',gap:'8px',marginBottom:'2px'} },
+                  Badge(ev.status),
+                  h('span', { style:{fontSize:'12px',color:'var(--text3)'} }, 'v' + ev.version)
+                ),
+                h('div', { style:{fontSize:'14px',marginBottom:'2px'} }, ev.note),
+                h('div', { style:{fontSize:'12px',color:'var(--text3)'} }, fmtTime(ev.timestamp) + ' · ' + ev.user)
+              )
+            )
+          )
+        )
+      ),
+      h('div', { className:'modal-footer' },
+        h('button', { className:'btn btn-secondary', onClick: () => { state.modal=null; render(); } }, 'Close')
+      )
+    )
+  );
+}
+
+function ModalNewCandidate() {
+  let fd = { name:'', email:'', phone:'', role:'', department:'', status:'active' };
+  function save() {
+    if (!fd.name || !fd.email) { showToast('Name and email required'); return; }
+    state.candidates.push({ id: nextId++, ...fd });
+    state.modal = null;
+    showToast('Candidate added!');
+  }
+  return h('div', { className:'overlay', onClick: e => { if(e.target.className==='overlay'){ state.modal=null; render(); } } },
+    h('div', { className:'modal' },
+      h('div', { className:'modal-header' },
+        h('div', { className:'modal-title' }, 'Add Candidate'),
+        h('button', { className:'btn btn-ghost btn-xs', innerHTML: Icon.close, onClick: () => { state.modal=null; render(); } })
+      ),
+      h('div', { className:'modal-body' },
+        h('div', { className:'form-group' }, h('label',{},'Full Name *'), h('input', { type:'text', placeholder:'Priya Sharma', onInput: e => fd.name=e.target.value })),
+        h('div', { className:'form-group' }, h('label',{},'Email *'), h('input', { type:'email', placeholder:'priya@email.com', onInput: e => fd.email=e.target.value })),
+        h('div', { className:'input-row' },
+          h('div', { className:'form-group' }, h('label',{},'Phone'), h('input', { type:'tel', placeholder:'+91 98765 43210', onInput: e => fd.phone=e.target.value })),
+          h('div', { className:'form-group' }, h('label',{},'Department'), h('input', { type:'text', placeholder:'Engineering', onInput: e => fd.department=e.target.value }))
+        ),
+        h('div', { className:'form-group' }, h('label',{},'Role / Position'), h('input', { type:'text', placeholder:'Software Engineer', onInput: e => fd.role=e.target.value }))
+      ),
+      h('div', { className:'modal-footer' },
+        h('button', { className:'btn btn-secondary', onClick: () => { state.modal=null; render(); } }, 'Cancel'),
+        h('button', { className:'btn btn-primary', onClick: save }, '+ Add Candidate')
+      )
+    )
+  );
+}
+
+// ---- AUTH ----
+function AuthPage() {
+  let mode = 'login';
+  let email = '', password = '', name = '';
+  let err = '';
+
+  function tryLogin() {
+    if (!email || !password) { err = 'Please fill in all fields'; render(); return; }
+    if (password.length < 6) { err = 'Password must be at least 6 characters'; render(); return; }
+    state.auth = { email, name: name || email.split('@')[0], role: 'admin' };
+    state.page = 'dashboard';
+    showToast('Welcome back, ' + state.auth.name + '!');
+  }
+
+  return h('div', { className:'auth-wrap' },
+    h('div', { className:'auth-card' },
+      h('div', { className:'auth-logo' }, '⬡ OfferFlow'),
+      h('div', { className:'auth-tagline' }, 'Professional HR Offer Letter Suite'),
+      h('div', { style:{display:'flex',gap:'0',marginBottom:'24px',borderRadius:'8px',overflow:'hidden',border:'1px solid var(--border)'} },
+        h('button', { style:{flex:'1',padding:'8px',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:'14px',fontWeight:'500',background: mode==='login'?'var(--accent)':'var(--surface)',color: mode==='login'?'white':'var(--text2)',transition:'all 0.15s'},
+          onClick: () => { mode='login'; render(); }
+        }, 'Sign In'),
+        h('button', { style:{flex:'1',padding:'8px',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:'14px',fontWeight:'500',background: mode==='signup'?'var(--accent)':'var(--surface)',color: mode==='signup'?'white':'var(--text2)',transition:'all 0.15s'},
+          onClick: () => { mode='signup'; render(); }
+        }, 'Sign Up')
+      ),
+      err ? h('div', { style:{background:'var(--danger-bg)',color:'var(--danger)',padding:'10px 14px',borderRadius:'8px',fontSize:'13px',marginBottom:'16px'} }, err) : null,
+      mode === 'signup' ? h('div', { className:'form-group' }, h('label',{},'Full Name'), h('input', { type:'text', placeholder:'Priya Sharma', onInput: e => { name=e.target.value; } })) : null,
+      h('div', { className:'form-group' }, h('label',{},'Work Email'), h('input', { type:'email', placeholder:'hr@company.com', onInput: e => { email=e.target.value; } })),
+      h('div', { className:'form-group' }, h('label',{},'Password'), h('input', { type:'password', placeholder:'••••••••', onInput: e => { password=e.target.value; } })),
+      h('button', { className:'btn btn-primary', style:{width:'100%',justifyContent:'center',marginTop:'4px'}, onClick: tryLogin },
+        mode === 'login' ? '→ Sign In' : '→ Create Account'
+      ),
+      h('div', { style:{textAlign:'center',marginTop:'20px',fontSize:'13px',color:'var(--text3)'} },
+        'Demo: use any email + 6 char password'
+      )
+    )
+  );
+}
+
+// ---- APP ----
+function App() {
+  if (!state.auth) return AuthPage();
+
+  const pages = {
+    dashboard: Dashboard,
+    offers: OffersPage,
+    templates: TemplatesPage,
+    candidates: CandidatesPage,
+    bulk: BulkPage,
+    settings: SettingsPage
+  };
+  const Page = pages[state.page] || Dashboard;
+
+  const modals = {
+    newOffer: ModalNewOffer,
+    viewOffer: ModalViewOffer,
+    editOffer: ModalEditOffer,
+    editTemplate: ModalEditTemplate,
+    history: ModalHistory,
+    newCandidate: ModalNewCandidate
+  };
+  const Modal = modals[state.modal];
+
+  return h('div', { className: 'app' },
+    Sidebar(),
+    h('div', { className: 'main' },
+      Page()
+    ),
+    Modal ? Modal() : null,
+    state.toast ? h('div', { className:'toast' }, state.toast) : null
+  );
+}
+
+// Init
+setTheme(state.darkMode);
+render();
+</script>
+</body>
+</html>
